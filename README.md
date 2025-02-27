@@ -33,24 +33,24 @@ During reproduction, survivors with higher fitness scores in the previous genera
 
 Instead, we can normalize the performance scores and then pick a random number between 0 and 1. If the normalized fitness of an individual is greater than or equal to this random number, that individual is selected for reproduction.
 
-```pseudo
-// Selection pseudo-code snippet
+```python
+# Selection snippet
 
 ```
 
 ### Crossover
 The crossover operation is performed by selecting a random “node” (or parameter index) in the neural network’s parameter set and performing a linear partition on both parents' parameters. New offspring are created by combining the parameter segments from each parent.
 
-```pseudo
-// Crossover pseudo-code snippet
+```python
+# Crossover snippet
 
 ```
 
 ### Mutation
 During mutation, each parameter of a new individual’s network is considered for mutation based on a predefined mutation rate. When a parameter is selected to mutate, a small random value (sampled from a normal distribution) is added or subtracted from the existing parameter value.
 
-```pseudo
-// Mutation pseudo-code snippet
+```python
+# Mutation snippet
 
 ```
 
