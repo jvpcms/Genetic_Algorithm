@@ -11,11 +11,21 @@ This repository details the methods used to train a Neural Network to play a ver
 - Input features:
   1. The horizontal distance between the bird and the next obstacle.
   2. The vertical distance between the bird and the center of the gap.
-- Output node is a single value in the range [0, 1]. When the output value reaches 0.5 or higher, the bird performs a jump. The normalization procedure for this output is addressed further below.
+- Output node is a single value in the range [0, 1].
 
 ### Parameters
 - Weights of the network are initialized using a normal (Gaussian) distribution.
 - Biases are initialized to 0.
+
+### Activaton Funciton
+At each layer, the network computes the weighted sum of the outputs from the previous layer and adds a bias term to each node. This result passes through an activation function wich, for this implementation, is the sigmoid function:
+
+```python
+ def activation(x):
+        return 1 / (1 + np.exp(-x))
+```  
+
+Because sigmoid outputs values in the [0, 1] range, it neatly fits the single output node that decides whether the bird should jump or not, based on a 0.5 threshold.
 
 ## Genetic Algorithm
 
@@ -34,24 +44,62 @@ During reproduction, survivors with higher fitness scores in the previous genera
 Instead, we can normalize the performance scores and then pick a random number between 0 and 1. If the normalized fitness of an individual is greater than or equal to this random number, that individual is selected for reproduction.
 
 ```python
-# Selection snippet
+def weighted_choice(weights):
 
+    r = np.random.rand()
+    for i in range(len(weights)):
+        r -= weights[i]
+        if r <= 0:
+            return i
 ```
 
 ### Crossover
 The crossover operation is performed by selecting a random “node” (or parameter index) in the neural network’s parameter set and performing a linear partition on both parents' parameters. New offspring are created by combining the parameter segments from each parent.
 
 ```python
-# Crossover snippet
+def crossover(parent1, parent2, layer_sizes):
+    child = parent2
+    bias_split = int(np.random.rand() * sum(layer_sizes[:-1]))
+    n_weights = 0
 
+    for i in range(len(layer_sizes) - 1):
+        n_weights += layer_sizes[i] * layer_sizes[i + 1]
+
+    weight_split = int(np.random.rand() * n_weights)
+
+    for bias in range(len(parent1.biases)):
+        for b in range(len(parent1.biases[bias])):
+            if bias_split > 0:
+                child.biases[bias][b] = parent1.biases[bias][b]
+            bias_split -= 1
+
+    for weight in range(len(parent1.weights)):
+        for line in range(len(parent1.weights[weight])):
+            for col in range(len(parent1.weights[weight][line])):
+                if weight_split > 0:
+                    child.weights[weight][line][col] = parent1.weights[weight][line][col]
+                weight_split -= 1
+
+    return child
 ```
 
 ### Mutation
 During mutation, each parameter of a new individual’s network is considered for mutation based on a predefined mutation rate. When a parameter is selected to mutate, a small random value (sampled from a normal distribution) is added or subtracted from the existing parameter value.
 
 ```python
-# Mutation snippet
+def mutate(network, mutation_rate, layer_sizes):
 
+    if np.random.rand() <= mutation_rate:
+        weight_shapes = [(a, b) for a, b in zip(layer_sizes[1:], layer_sizes[:-1])]
+        weights = [np.random.standard_normal(s) / 100 for s in weight_shapes]
+        biases = [np.random.standard_normal((s, 1)) / 100 for s in layer_sizes[1:]]
+
+        weights = np.add(weights, network.weights)
+        biases = np.add(biases, network.biases)
+
+        return NeuralNetwork(layer_sizes, weights, biases)
+
+    return network
 ```
 
 ## Tuning the Hyperparameters
